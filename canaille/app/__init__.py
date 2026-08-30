@@ -63,9 +63,7 @@ def validate_uri(value) -> bool:
     # RFC 8252 native applications commonly use reverse-domain custom URI
     # schemes such as ``app.immich:///oauth-callback``. Triple-slash URIs have
     # no authority, so accept them only when their callback path is absolute.
-    return "." in parsed.scheme and bool(
-        parsed.netloc or parsed.path.startswith("/")
-    )
+    return "." in parsed.scheme and bool(parsed.netloc or parsed.path.startswith("/"))
 
 
 class classproperty:
