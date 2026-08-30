@@ -5,6 +5,7 @@ on:
     tags:
       - "v*"
 
+# Serializes attempts for one immutable tag without dropping other release tags.
 concurrency:
   group: publish-kmms-canaille-${{ github.repository }}-${{ github.ref_name }}
   cancel-in-progress: false
@@ -17,6 +18,8 @@ jobs:
   publish:
     name: Publish immutable GHCR image
     runs-on: ubuntu-24.04
+    outputs:
+      image: ${{ steps.release.outputs.image }}
     steps:
       - name: Check out the release commit
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -70,3 +73,47 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  update-latest:
+    name: Update latest image tag
+    needs: publish
+    runs-on: ubuntu-24.04
+    # Queued latest jobs may coalesce, but never block or cancel immutable publishes.
+    concurrency:
+      group: publish-kmms-canaille-latest-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      - name: Check out the release commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Authenticate to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.5.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.0.0
+
+      - name: Update latest to the highest released version
+        env:
+          IMAGE: ${{ needs.publish.outputs.image }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git fetch --force origin main
+          git fetch --force --tags origin
+          latest_release_tag="$(
+            git tag --merged origin/main --list 'v*-kmms.*' \
+              | grep -Ex 'v[0-9]+\.[0-9]+\.[0-9]+-kmms\.[0-9]+' \
+              | sort -V \
+              | tail -n 1
+          )"
+          if [ "$RELEASE_TAG" != "$latest_release_tag" ]; then
+            echo "Not updating latest from $RELEASE_TAG; $latest_release_tag is newer."
+            exit 0
+          fi
+          docker buildx imagetools create --tag "${IMAGE%:*}:latest" "$IMAGE"
