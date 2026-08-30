@@ -1,0 +1,119 @@
+name: Publish KMMS Canaille image
+
+on:
+  push:
+    tags:
+      - "v*"
+
+# Serializes attempts for one immutable tag without dropping other release tags.
+concurrency:
+  group: publish-kmms-canaille-${{ github.repository }}-${{ github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Publish immutable GHCR image
+    runs-on: ubuntu-24.04
+    outputs:
+      image: ${{ steps.release.outputs.image }}
+    steps:
+      - name: Check out the release commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Derive and validate the release image tag
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+-kmms\.[0-9]+$ ]]; then
+            echo "Expected tag format vX.Y.Z-kmms.N, got: $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+          image="ghcr.io/${GITHUB_REPOSITORY,,}:$version"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Require a commit reachable from main
+        run: |
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - name: Authenticate to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.5.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Refuse to overwrite an existing release tag
+        env:
+          IMAGE: ${{ steps.release.outputs.image }}
+        run: |
+          if docker manifest inspect "$IMAGE" >/dev/null 2>&1; then
+            echo "Refusing to overwrite existing image tag: $IMAGE" >&2
+            exit 1
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.0.0
+
+      - name: Build and publish the release image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.0.0
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.release.outputs.image }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  update-latest:
+    name: Update latest image tag
+    needs: publish
+    runs-on: ubuntu-24.04
+    # Queued latest jobs may coalesce, but never block or cancel immutable publishes.
+    concurrency:
+      group: publish-kmms-canaille-latest-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      - name: Check out the release commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Authenticate to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.5.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.0.0
+
+      - name: Update latest to the highest released version
+        env:
+          IMAGE: ${{ needs.publish.outputs.image }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git fetch --force origin main
+          git fetch --force --tags origin
+          latest_release_tag="$(
+            git tag --merged origin/main --list 'v*-kmms.*' \
+              | grep -Ex 'v[0-9]+\.[0-9]+\.[0-9]+-kmms\.[0-9]+' \
+              | sort -V \
+              | tail -n 1
+          )"
+          if [ "$RELEASE_TAG" != "$latest_release_tag" ]; then
+            echo "Not updating latest from $RELEASE_TAG; $latest_release_tag is newer."
+            exit 0
+          fi
+          docker buildx imagetools create --tag "${IMAGE%:*}:latest" "$IMAGE"

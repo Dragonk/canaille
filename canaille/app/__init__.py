@@ -57,9 +57,13 @@ def get_current_mail_domain():
 
 def validate_uri(value) -> bool:
     parsed = urlparse(value)
-    return (parsed.scheme in ["http", "https"] or "." in parsed.scheme) and bool(
-        parsed.netloc
-    )
+    if parsed.scheme in ["http", "https"]:
+        return bool(parsed.netloc)
+
+    # RFC 8252 native applications commonly use reverse-domain custom URI
+    # schemes such as ``app.immich:///oauth-callback``. Triple-slash URIs have
+    # no authority, so accept them only when their callback path is absolute.
+    return "." in parsed.scheme and bool(parsed.netloc or parsed.path.startswith("/"))
 
 
 class classproperty:

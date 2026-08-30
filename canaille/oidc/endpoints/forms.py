@@ -114,6 +114,19 @@ class ClientAddForm(Form):
 class ClientEditForm(ClientAddForm):
     """Complete form for editing a client with all metadata fields."""
 
+    require_nonce = wtforms.SelectField(
+        _("Nonce requirement"),
+        validators=[wtforms.validators.Optional()],
+        choices=[
+            wtforms.SelectChoice(value="", label=_("Use server default")),
+            wtforms.SelectChoice(value="true", label=_("Require nonce")),
+            wtforms.SelectChoice(value="false", label=_("Do not require nonce")),
+        ],
+        description=_(
+            "Choose whether this client must send an OIDC nonce in the authorization code flow. A supplied nonce is validated even when it is not required. Implicit and hybrid flows always require a nonce."
+        ),
+    )
+
     client_secret_expires_at = DateTimeUTCField(
         _("Secret expiration"),
         validators=[wtforms.validators.Optional()],
