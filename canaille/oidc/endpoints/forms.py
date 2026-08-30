@@ -123,7 +123,7 @@ class ClientEditForm(ClientAddForm):
             wtforms.SelectChoice(value="false", label=_("Do not require nonce")),
         ],
         description=_(
-            "Choose whether this client must send an OIDC nonce. A supplied nonce is validated even when it is not required."
+            "Choose whether this client must send an OIDC nonce in the authorization code flow. A supplied nonce is validated even when it is not required. Implicit and hybrid flows always require a nonce."
         ),
     )
 

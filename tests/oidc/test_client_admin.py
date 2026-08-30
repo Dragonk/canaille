@@ -7,6 +7,14 @@ from joserfc.jwk import RSAKey
 from werkzeug.security import gen_salt
 
 from canaille.app import models
+from canaille.oidc.endpoints.forms import ClientEditForm
+
+
+def test_client_nonce_policy_description_limits_the_override_to_code_flow():
+    description = ClientEditForm.require_nonce.kwargs["description"]
+
+    assert "authorization code flow" in description
+    assert "Implicit and hybrid flows always require a nonce" in description
 
 
 def test_no_logged_no_access(testclient):
