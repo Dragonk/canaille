@@ -238,6 +238,13 @@ class OIDCGrantMixin:
 
 
 class OpenIDCode(OIDCGrantMixin, oidc_core.OpenIDCode):
+    def get_authorization_code_claims(self, authorization_code):
+        """Do not serialize an omitted authorization-request nonce as JSON null."""
+        claims = super().get_authorization_code_claims(authorization_code)
+        if claims["nonce"] is None:
+            del claims["nonce"]
+        return claims
+
     def exists_nonce(self, nonce, request):
         return exists_nonce(nonce, request)
 

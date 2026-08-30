@@ -7,8 +7,37 @@ from joserfc import jwt
 
 from canaille.app import models
 from canaille.oidc.jose import registry
+from canaille.oidc.provider import OpenIDCode
 
 from . import client_credentials
+
+
+def test_id_token_omits_null_nonce_claim():
+    """OIDC clients reject a null nonce claim when no nonce was requested."""
+
+    class AuthorizationCode:
+        def __init__(self, nonce):
+            self.nonce = nonce
+
+        def get_nonce(self):
+            return self.nonce
+
+        def get_auth_time(self):
+            return 0
+
+        def get_acr(self):
+            return None
+
+        def get_amr(self):
+            return None
+
+    claims = OpenIDCode().get_authorization_code_claims(AuthorizationCode(None))
+
+    assert "nonce" not in claims
+    assert (
+        OpenIDCode().get_authorization_code_claims(AuthorizationCode("nonce"))["nonce"]
+        == "nonce"
+    )
 
 
 def test_nominal_case(
