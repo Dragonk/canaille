@@ -8,6 +8,8 @@ def test_validate_uri():
     assert validate_uri("scheme.with.dots://canaille.tld")
     assert validate_uri("scheme.with.dots://localhost")
     assert validate_uri("scheme.with.dots://oauth")
+    assert validate_uri("app.immich:///oauth-callback")
+    assert not validate_uri("app.immich:oauth-callback")
     assert validate_uri("http://127.0.0.1")
     assert validate_uri("http://127.0.0.1:8000")
     assert not validate_uri("data://canaille.test")
