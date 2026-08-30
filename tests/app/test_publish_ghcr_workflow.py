@@ -1,7 +1,6 @@
 import re
 from pathlib import Path
 
-
 WORKFLOW_PATH = Path(".github/workflows/publish-ghcr.yml")
 REPAIR_WORKFLOW_PATH = Path(".github/workflows/repair-ghcr-latest.yml")
 
@@ -46,7 +45,7 @@ def test_latest_repair_workflow_repoints_an_existing_release_image():
     assert "workflow_dispatch:" in workflow
     assert "release_tag:" in workflow
     assert "ref: ${{ inputs.release_tag }}" in workflow
-    assert "docker manifest inspect \"$IMAGE\"" in workflow
+    assert 'docker manifest inspect "$IMAGE"' in workflow
     assert 'release_sha="$(git rev-list -n 1 "$RELEASE_TAG")"' in workflow
-    assert "git merge-base --is-ancestor \"$release_sha\" origin/main" in workflow
+    assert 'git merge-base --is-ancestor "$release_sha" origin/main' in workflow
     assert "docker buildx imagetools create" in workflow
