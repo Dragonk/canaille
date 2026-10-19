@@ -1039,6 +1039,32 @@ msgstr ""
 "przepływ kodu autoryzacyjnego i przepływ niejawny."
 
 #: canaille/oidc/endpoints/forms.py:118
+msgid "Nonce requirement"
+msgstr "Wymóg nonce"
+
+#: canaille/oidc/endpoints/forms.py:121
+msgid "Use server default"
+msgstr "Użyj domyślnego ustawienia serwera"
+
+#: canaille/oidc/endpoints/forms.py:122
+msgid "Require nonce"
+msgstr "Wymagaj nonce"
+
+#: canaille/oidc/endpoints/forms.py:123
+msgid "Do not require nonce"
+msgstr "Nie wymagaj nonce"
+
+#: canaille/oidc/endpoints/forms.py:125
+msgid ""
+"Choose whether this client must send an OIDC nonce in the authorization code "
+"flow. A supplied nonce is validated even when it is not required. Implicit and "
+"hybrid flows always require a nonce."
+msgstr ""
+"Określ, czy ten klient musi przesyłać nonce OIDC w przepływie kodu "
+"autoryzacyjnego. Podana wartość nonce jest weryfikowana, nawet gdy nie jest "
+"wymagana. Przepływy niejawne i hybrydowe zawsze wymagają nonce."
+
+#: canaille/oidc/endpoints/forms.py:118
 msgid "Secret expiration"
 msgstr "Wygaśnięcie klucza tajnego klienta"
 
