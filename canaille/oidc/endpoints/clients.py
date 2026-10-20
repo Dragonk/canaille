@@ -144,6 +144,9 @@ def client_edit(user, client):
     }
     if data["scope"]:
         data["scope"] = " ".join(data["scope"])
+    data["require_nonce"] = (
+        "" if data["require_nonce"] is None else str(data["require_nonce"]).lower()
+    )
     form = ClientEditForm(
         request.form or None,
         data=data,
@@ -218,6 +221,11 @@ def client_edit(user, client):
         "request_uris": [v for v in form["request_uris"].data if v] or None,
         "require_signed_request_object": form["require_signed_request_object"].data,
         "owners": list(dict.fromkeys(form["owners"].data)),
+        "require_nonce": (
+            None
+            if form["require_nonce"].data == ""
+            else form["require_nonce"].data == "true"
+        ),
     }
 
     Backend.instance.update(client, **update_data)
