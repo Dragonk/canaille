@@ -3787,3 +3787,27 @@ msgstr "Token"
 #~ msgstr ""
 #~ "Nie skonfigurowano aplikacji uwierzytelniającej. Kliknij poniższy "
 #~ "przycisk i postępuj zgodnie z instrukcjami, aby ją skonfigurować."
+
+#: canaille/oidc/endpoints/forms.py:373
+msgid "Nonce requirement"
+msgstr "Wymóg nonce"
+
+#: canaille/oidc/endpoints/forms.py:376
+msgid "Use server default"
+msgstr "Użyj domyślnego ustawienia serwera"
+
+#: canaille/oidc/endpoints/forms.py:377
+msgid "Require nonce"
+msgstr "Wymagaj nonce"
+
+#: canaille/oidc/endpoints/forms.py:378
+msgid "Do not require nonce"
+msgstr "Nie wymagaj nonce"
+
+#: canaille/oidc/endpoints/forms.py:380
+msgid ""
+"Choose whether this client must send an OIDC nonce. A supplied nonce is "
+"validated even when it is not required."
+msgstr ""
+"Określ, czy ten klient musi przesyłać nonce OIDC. Podana wartość nonce "
+"jest weryfikowana, nawet gdy nie jest wymagana."
