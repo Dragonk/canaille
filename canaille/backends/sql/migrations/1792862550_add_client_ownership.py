@@ -1,7 +1,7 @@
 """Add client ownership.
 
 Revision ID: 1792862550
-Revises: 1785442300
+Revises: 1786000000
 Create Date: 2026-10-24 00:00:00.000000
 
 """
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "1792862550"
-down_revision: str | None = "1785442300"
+down_revision: str | None = "1786000000"
 branch_labels: str | Sequence[str] | None = ()
 depends_on: str | Sequence[str] | None = None
 
